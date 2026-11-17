@@ -105,7 +105,8 @@ function resetFilters() {
 }
 
 function exportRows() {
-  downloadEntries(meta.key)
+  // 导出和列表使用同一套筛选条件，明细与页面列表保持一致。
+  downloadEntries(meta.key, filters.value)
 }
 
 function openCreate() {

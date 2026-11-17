@@ -68,6 +68,11 @@ npm run build
 - 字段、状态、动作与流转目标集中在 `frontend/src/data/modules.ts`；示例数据在
   `frontend/src/data/seed.ts`。
 - 状态流转只允许在 `local-service.ts` 里改，页面组件不做业务判断。
+- 分析流水线的依赖编排在 `frontend/src/api/pipeline-service.ts`：运行批次独立存放在
+  `data-explore-studio:pipeline-run`，按「依赖上游」生成无环波次，环路 / 重复上游直接阻止启动；
+  结果是 append-only 的 `RES-*` 批次记录，恢复时跳过已成功节点，不会重复写；导出流水线清单时
+  会附带运行批次、依赖选择、失败断点、结果记录与核对结论。
+- 导出统一走列表的筛选条件，导出的明细行与页面上的列表一致。
 - 想回到初始数据：清掉浏览器里 `data-explore-studio:entries` 这一项，或调用 `resetModule(模块)`。
 
 领域：数据工程

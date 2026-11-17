@@ -1,5 +1,6 @@
 import { MODULE_BY_KEY } from '@/data/modules'
 import { allRows, listRows, resetRows, saveRows } from '@/data/local-store'
+import { pipelineExportSections } from '@/api/pipeline-service'
 import type { ActionResult, EntryRow, ModuleMeta, OverviewResult, PageResult } from '@/data/types'
 
 // 会写进数据的「往回走」动作：命中就把这条记录标成异常态，看板上能一眼看出来。
@@ -61,18 +62,26 @@ export function resetModule(key: string): PageResult {
   return listEntries(key)
 }
 
-export function exportEntries(key: string): { filename: string; content: string } {
+export function exportEntries(
+  key: string,
+  filters: Record<string, string> = {},
+): { filename: string; content: string } {
   const meta = moduleMeta(key)
   const header = ['编号', ...meta.fields, '当前状态']
   const lines = [header.join(',')]
-  for (const row of listRows(key)) {
+  // 导出走和列表同一套筛选，导出明细与页面上的列表保持一致。
+  for (const row of filterRows(listRows(key), filters)) {
     lines.push([row.id, ...meta.fields.map((field) => row[field] ?? ''), row.status].join(','))
+  }
+  // 流水线模块把运行批次一并带进导出文件，刷新或换机器后批次仍有依据。
+  if (key === 'pipeline') {
+    lines.push(...pipelineExportSections())
   }
   return { filename: `${meta.name}-清单.csv`, content: `\uFEFF${lines.join('\n')}` }
 }
 
-export function downloadEntries(key: string): void {
-  const { filename, content } = exportEntries(key)
+export function downloadEntries(key: string, filters: Record<string, string> = {}): void {
+  const { filename, content } = exportEntries(key, filters)
   const blob = new Blob([content], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
